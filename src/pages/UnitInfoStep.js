@@ -68,6 +68,7 @@ const UnitInfoStep = ({focusNextButton}) => {
   // Capture image from webcam
   const capture = () => {
     const screenshot = webcamRef_a.current.getScreenshot();
+    console.log("camera screen:", screenshot)
     setImage(screenshot);
 };
 
@@ -130,6 +131,7 @@ const UnitInfoStep = ({focusNextButton}) => {
   // Capture image from webcam
   const handleCapture = () => {
     const screenshot = webcamRef.current.getScreenshot();
+    console.log("sceenshot image:", screenshot)
     handleFileChange(screenshot)
     // setImage(screenshot);
   };

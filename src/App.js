@@ -77,7 +77,7 @@ function App() {
   return (
     <main>
       <div className="Container">
-        <Steps/>
+        <Steps />
         { user.isShowPreStep ? 
           <div className="content">
             {PageDisplay()}

@@ -526,6 +526,10 @@ export const licensePlateOCR = createAsyncThunk("user/licensePlateOCR", async (l
       const plateRegion = results.length ? results[0].region.code : ""
       const regionInfoArray = plateRegion.split("-")
       const plateState = regionInfoArray.length == 2 ? String(regionInfoArray[1]).toUpperCase() : ""
+      // Set plate number
+      dispatch(updateVehicleData({
+        licenseID: plateNumber
+      }))
 
       if(plateState && plateNumber) {
         // get VIN, Year, Make and Model from License Plate
@@ -548,7 +552,6 @@ export const licensePlateOCR = createAsyncThunk("user/licensePlateOCR", async (l
           console.log("vehicle vin number:", vin)
           // update license plate info and VIN #
           dispatch(updateVehicleData({
-            licenseID: plateNumber,
             vin: vin,
             year: '',
             make: '',
@@ -558,9 +561,8 @@ export const licensePlateOCR = createAsyncThunk("user/licensePlateOCR", async (l
           dispatch(parseVIN(vin))
         })  
         .catch(error => {  
-          console.error('licensePlateOCR API failed:', error);  
+          console.error('Plate_TO_VIN API failed:', error);  
           dispatch(updateVehicleData({
-            licenseID: plateNumber,
             vin: '',
             year: '',
             make: '',
@@ -570,7 +572,6 @@ export const licensePlateOCR = createAsyncThunk("user/licensePlateOCR", async (l
       } else {
         console.log("plate info:", plateState, plateNumber)
         dispatch(updateVehicleData({
-          licenseID: plateNumber,
           vin: '',
           year: '',
           make: '',
@@ -611,10 +612,16 @@ export const parseVIN = createAsyncThunk("user/parseVIN", async (vinID, { dispat
           model: modelResults[0].Value ? modelResults[0].Value : "" ,
         }))
       } else {
+        dispatch(updateVehicleData({
+          vin: vinID
+        }))
         throw new Error('No vehicle information found.');
       }
     })  
     .catch(error => {  
+      dispatch(updateVehicleData({
+        vin: vinID
+      }))
       console.error('parseVIN API failed:', error);  
     });  
   } catch (error) {

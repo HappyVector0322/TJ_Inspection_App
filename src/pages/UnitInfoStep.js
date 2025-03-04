@@ -14,17 +14,50 @@ import "bootstrap-icons/font/bootstrap-icons.css"; // Import Bootstrap Icons
 const UnitInfoStep = ({focusNextButton}) => {
   const dispatch = useDispatch();
   const user = useSelector(e => e.user.value);
-  const [unitInfo, setUnitInfo] = useState({
-    id: "",
-    odometer: ""
-  });
-  const [haveOdometer, setHaveOdometer] = useState(true)
-  const [license, setLicense] = useState("")
-  const [hours, setHours] = useState("")
-  const [haveHours, setHaveHours] = useState(true)
+  const [isCameraOpen, setIsCameraOpen] = useState(false)
 
+  // Refs for each input field  
+  const fileInputRef = useRef(null);
+  const unitIdRef = useRef(null);  
+  const odometerRef = useRef(null);  
+  const licenseRef = useRef(null);  
+  const hoursRef = useRef(null);  
+  const webcamRef = useRef(null);
+
+  useEffect(()=>{
+    if (unitIdRef.current) {  
+      unitIdRef.current.focus();  
+    }  
+  },[])
 
   
+  const handleKeyPress = (e, nextRef) => {  
+    if (e.key === "Enter") {  
+      e.preventDefault();  
+      if (nextRef && nextRef.current) {  
+        nextRef.current.focus();  
+      } else if (focusNextButton) {  
+        focusNextButton();  
+      }  
+    }  
+  };  
+
+  const haveOdometerChange = (e) => {
+    if (e.target.checked) {
+      dispatch(info({...user, odometer: "", haveOdometer: !e.target.checked}))
+    } else {
+      dispatch(info({...user, haveOdometer: !e.target.checked}))
+    }
+  }
+
+  const handleCheckChange = (e) => {
+    if (e.target.checked) {
+      dispatch(info({...user, hours: "", haveHours: !e.target.checked}))
+    } else {
+      dispatch(info({...user, haveHours: !e.target.checked}))
+    }
+  }
+
   const handleFileChange = (selectedFile) => {
     console.log("image:", selectedFile)
     if (!selectedFile) {
@@ -55,88 +88,27 @@ const UnitInfoStep = ({focusNextButton}) => {
     );
   }
 
-  // Refs for each input field  
-  const fileInputRef = useRef(null);
-  const unitIdRef = useRef(null);  
-  const odometerRef = useRef(null);  
-  const licenseRef = useRef(null);  
-  const hoursRef = useRef(null);  
-  const webcamRef = useRef(null);
-
-  const webcamRef_a = useRef(null);
-  const [image, setImage] = useState(null);
-  // Capture image from webcam
-  const capture = () => {
-    const screenshot = webcamRef_a.current.getScreenshot();
-    console.log("camera screen:", screenshot)
-    setImage(screenshot);
-};
-
-
-
-
-  useEffect(()=>{
-    setUnitInfo({...unitInfo, id:user.unitID, odometer: user.odometer })
-    setHaveOdometer(user.haveOdometer)
-    setLicense(user.licenseID)
-    setHours(user.hours)
-    setHaveHours(user.haveHours)
-
-    if (unitIdRef.current) {  
-      unitIdRef.current.focus();  
-    }  
-  },[])
-
-  
-  useEffect(() => {
-    dispatch(info({...user, 
-      unitID: unitInfo.id.toUpperCase(), 
-      odometer: haveOdometer? unitInfo.odometer.toUpperCase():"", 
-      haveOdometer: haveOdometer,
-      licenseID: license.toUpperCase(), 
-      hours: haveHours?hours.toUpperCase():"", 
-      haveHours: haveHours
-    }));
-  }, [unitInfo.id, unitInfo.odometer, haveOdometer, license, hours, haveHours]);
-
-  const handleKeyPress = (e, nextRef) => {  
-    if (e.key === "Enter") {  
-      e.preventDefault();  
-      if (nextRef && nextRef.current) {  
-        nextRef.current.focus();  
-      } else if (focusNextButton) {  
-        focusNextButton();  
-      }  
-    }  
-  };  
-
-  const haveOdometerChange = (e) => {
-    if (e.target.checked) {
-      setUnitInfo({ ...unitInfo, odometer: "" })
-      setHaveOdometer(!e.target.checked)
-    } else {
-      setHaveOdometer(!e.target.checked)
-    }
-  }
-
-  const handleCheckChange = (e) => {
-    if (e.target.checked) {
-      setHours("")
-      setHaveHours(!e.target.checked)
-    } else {
-      setHaveHours(!e.target.checked)
-    }
-  }
-
   // Capture image from webcam
   const handleCapture = () => {
     const screenshot = webcamRef.current.getScreenshot();
-    console.log("sceenshot image:", screenshot)
-    handleFileChange(screenshot)
-    // setImage(screenshot);
+    setIsCameraOpen(false); // Exit full screen after capturing
+
+    if (!screenshot) {
+        console.error("Error capturing image.");
+        return;
+    }
+
+    // Convert base64 to Blob for Resizer
+    fetch(screenshot)
+      .then(res => res.blob())
+      .then(blob => {
+        handleFileChange(blob)
+      })
+      .catch(error => {
+        console.error("Error processing image:", error);
+        setIsCameraOpen(false);
+      });
   };
-
-
 
 
   return (
@@ -156,14 +128,15 @@ const UnitInfoStep = ({focusNextButton}) => {
             <input
               type="text" autoComplete="on"
               className={user.unitID.length < 2 && user.nextClick ? "erorr" : ""}
-              defaultValue={unitInfo.id}
-              onChange={e => setUnitInfo({ ...unitInfo, id: e.target.value.replace(/\s+/g, '')})}
+              value={user.unitID}
+              onChange={e => dispatch(info({...user, unitID: e.target.value.replace(/\s+/g, '').toUpperCase()}))}
               style={{ textTransform: 'uppercase' }}
               placeholder="T-22"
               ref={unitIdRef}
               onKeyPress={(e) => handleKeyPress(e, odometerRef)}
             />
           </div>
+
 
           <div className="fields">
             <div className="dflex">
@@ -172,7 +145,7 @@ const UnitInfoStep = ({focusNextButton}) => {
                 <label>is N/A?</label>
                 <input 
                   type="checkbox"
-                  checked={!haveOdometer}
+                  checked={!user.haveOdometer}
                   onChange={haveOdometerChange}
                 />
               </div>
@@ -180,9 +153,9 @@ const UnitInfoStep = ({focusNextButton}) => {
             <input
               type="number" autoComplete="on"
               className={user.odometer.length < 2 && user.nextClick && user.haveOdometer ? "erorr" : ""}
-              defaultValue={unitInfo.odometer}
-              onChange={e => setUnitInfo({ ...unitInfo, odometer: e.target.value })}
-              disabled={!haveOdometer}
+              value={user.odometer}
+              onChange={e => dispatch(info({...user, odometer: e.target.value.toUpperCase()}))}
+              disabled={!user.haveOdometer}
               style={{ textTransform: 'uppercase' }}
               placeholder="111698"
               ref={odometerRef}
@@ -205,8 +178,6 @@ const UnitInfoStep = ({focusNextButton}) => {
                 className={user.licenseID.length < 2 && user.nextClick ? "erorr" : ""}
                 value={user.licenseID}
                 onChange={e => dispatch(info({...user, licenseID: e.target.value}))}
-                // defaultValue={license}
-                // onChange={e => setLicense(e.target.value)}
                 style={{ textTransform: 'uppercase' }}
                 placeholder="41216P3"
                 ref={licenseRef}  
@@ -223,24 +194,12 @@ const UnitInfoStep = ({focusNextButton}) => {
                 <Button onClick={() => fileInputRef.current.click()} variant="secondary" className="camera-button">
                   <i className="bi bi-camera"></i>
                 </Button> */}
-
-                <Webcam
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  width={300}
-                  height={200}
-                  className="d-none"
-                  videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
-                />
-                <Button onClick={handleCapture} variant="secondary" className="camera-button">
+                <Button onClick={() => setIsCameraOpen(true)} variant="secondary" className="camera-button">
                   <i className="bi bi-camera"></i>
                 </Button> 
               </div>
             </div>
           </div>
-
-
-
 
           <div className="fields">
             <div className="dflex">
@@ -249,7 +208,7 @@ const UnitInfoStep = ({focusNextButton}) => {
                 <label>is N/A?</label>
                 <input 
                   type="checkbox"
-                  checked={!haveHours}
+                  checked={!user.haveHours}
                   onChange={handleCheckChange}
                 />
               </div>
@@ -257,9 +216,9 @@ const UnitInfoStep = ({focusNextButton}) => {
             <input
               type="number" autoComplete="on"
               className={user.hours.length < 1 && user.nextClick && user.haveHours ? "erorr" : ""}
-              defaultValue={hours}
-              onChange={e => setHours(e.target.value)}
-              disabled={!haveHours}
+              value={user.hours}
+              onChange={e => dispatch(info({...user, hours: e.target.value.toUpperCase()}))}
+              disabled={!user.haveHours}
               style={{ textTransform: 'uppercase' }}
               ref={hoursRef}  
               onKeyPress={(e) => handleKeyPress(e, null)} // No next input, focus the next button  
@@ -269,30 +228,24 @@ const UnitInfoStep = ({focusNextButton}) => {
         </form>
       </div>
 
-
       <Container className="mt-5 text-center">
-            <h2>Capture Image</h2>
+        {isCameraOpen ? (
+          <div className="full-screen-camera">
+              <Webcam
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  width="100%"
+                  height="80%"
+                  videoConstraints={{ facingMode: "environment" }}
+              />
+              <div className="dflex p-5" style={{width: '100%', justifyContent: 'center'}}>
+                <Button variant="secondary" style={{margin: '0 20px'}} onClick={() => setIsCameraOpen(false)}>Cancel</Button>
+                <Button variant="primary" style={{margin: '0 20px'}} onClick={() => handleCapture()}>Take Picture</Button>
+              </div>
 
-            {!image ? (
-                <Webcam
-                    ref={webcamRef_a}
-                    screenshotFormat="image/jpeg"
-                    width={300}
-                    height={200}
-                    videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
-                />
-            ) : (
-                <Image src={image} alt="Captured" thumbnail width="300" />
-            )}
-
-            <div className="mt-3">
-                {!image ? (
-                    <Button variant="primary" onClick={capture}>📷 Take Picture</Button>
-                ) : (
-                    <Button variant="danger" onClick={() => setImage(null)}>🔄 Retake</Button>
-                )}
-            </div>
-        </Container>
+          </div>
+        ) : null}
+      </Container>
 
     </div>
   );
@@ -301,43 +254,3 @@ const UnitInfoStep = ({focusNextButton}) => {
 export default UnitInfoStep;
 
 
-
-
-// function CameraCapture() {
-//     const webcamRef = useRef(null);
-//     const [image, setImage] = useState(null);
-
-//     // Capture image from webcam
-//     const capture = () => {
-//         const screenshot = webcamRef.current.getScreenshot();
-//         setImage(screenshot);
-//     };
-
-//     return (
-//         <Container className="mt-5 text-center">
-//             <h2>Capture Image</h2>
-
-//             {!image ? (
-//                 <Webcam
-//                     ref={webcamRef}
-//                     screenshotFormat="image/jpeg"
-//                     width={300}
-//                     height={200}
-//                     videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
-//                 />
-//             ) : (
-//                 <Image src={image} alt="Captured" thumbnail width="300" />
-//             )}
-
-//             <div className="mt-3">
-//                 {!image ? (
-//                     <Button variant="primary" onClick={capture}>📷 Take Picture</Button>
-//                 ) : (
-//                     <Button variant="danger" onClick={() => setImage(null)}>🔄 Retake</Button>
-//                 )}
-//             </div>
-//         </Container>
-//     );
-// }
-
-// export default CameraCapture;

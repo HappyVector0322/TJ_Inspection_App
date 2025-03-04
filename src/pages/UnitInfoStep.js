@@ -23,8 +23,10 @@ const UnitInfoStep = ({focusNextButton}) => {
   const [hours, setHours] = useState("")
   const [haveHours, setHaveHours] = useState(true)
 
+
   
   const handleFileChange = (selectedFile) => {
+    console.log("image:", selectedFile)
     if (!selectedFile) {
       console.log("Please select a file first!");
       return;
@@ -60,6 +62,17 @@ const UnitInfoStep = ({focusNextButton}) => {
   const licenseRef = useRef(null);  
   const hoursRef = useRef(null);  
   const webcamRef = useRef(null);
+
+  const webcamRef_a = useRef(null);
+  const [image, setImage] = useState(null);
+  // Capture image from webcam
+  const capture = () => {
+    const screenshot = webcamRef_a.current.getScreenshot();
+    setImage(screenshot);
+};
+
+
+
 
   useEffect(()=>{
     setUnitInfo({...unitInfo, id:user.unitID, odometer: user.odometer })
@@ -253,6 +266,31 @@ const UnitInfoStep = ({focusNextButton}) => {
           </div>
         </form>
       </div>
+
+
+      <Container className="mt-5 text-center">
+            <h2>Capture Image</h2>
+
+            {!image ? (
+                <Webcam
+                    ref={webcamRef_a}
+                    screenshotFormat="image/jpeg"
+                    width={300}
+                    height={200}
+                    videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
+                />
+            ) : (
+                <Image src={image} alt="Captured" thumbnail width="300" />
+            )}
+
+            <div className="mt-3">
+                {!image ? (
+                    <Button variant="primary" onClick={capture}>📷 Take Picture</Button>
+                ) : (
+                    <Button variant="danger" onClick={() => setImage(null)}>🔄 Retake</Button>
+                )}
+            </div>
+        </Container>
 
     </div>
   );

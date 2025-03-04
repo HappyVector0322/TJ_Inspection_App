@@ -59,6 +59,7 @@ const UnitInfoStep = ({focusNextButton}) => {
   const odometerRef = useRef(null);  
   const licenseRef = useRef(null);  
   const hoursRef = useRef(null);  
+  const webcamRef = useRef(null);
 
   useEffect(()=>{
     setUnitInfo({...unitInfo, id:user.unitID, odometer: user.odometer })
@@ -112,6 +113,15 @@ const UnitInfoStep = ({focusNextButton}) => {
       setHaveHours(!e.target.checked)
     }
   }
+
+  // Capture image from webcam
+  const handleCapture = () => {
+    const screenshot = webcamRef.current.getScreenshot();
+    handleFileChange(screenshot)
+    // setImage(screenshot);
+  };
+
+
 
 
   return (
@@ -188,7 +198,7 @@ const UnitInfoStep = ({focusNextButton}) => {
                 onKeyPress={(e) => handleKeyPress(e, hoursRef)} 
               />
               <div>
-                <input
+                {/* <input
                   type="file"
                   ref={fileInputRef}
                   onChange={e => handleFileChange(e.target.files[0])}
@@ -197,7 +207,19 @@ const UnitInfoStep = ({focusNextButton}) => {
                 />
                 <Button onClick={() => fileInputRef.current.click()} variant="secondary" className="camera-button">
                   <i className="bi bi-camera"></i>
-                </Button>
+                </Button> */}
+
+                <Webcam
+                  ref={webcamRef}
+                  screenshotFormat="image/jpeg"
+                  width={300}
+                  height={200}
+                  className="d-none"
+                  videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
+                />
+                <Button onClick={handleCapture} variant="secondary" className="camera-button">
+                  <i className="bi bi-camera"></i>
+                </Button> 
               </div>
             </div>
           </div>
@@ -236,46 +258,46 @@ const UnitInfoStep = ({focusNextButton}) => {
   );
 };
 
-// export default UnitInfoStep;
+export default UnitInfoStep;
 
 
 
 
-function CameraCapture() {
-    const webcamRef = useRef(null);
-    const [image, setImage] = useState(null);
+// function CameraCapture() {
+//     const webcamRef = useRef(null);
+//     const [image, setImage] = useState(null);
 
-    // Capture image from webcam
-    const capture = () => {
-        const screenshot = webcamRef.current.getScreenshot();
-        setImage(screenshot);
-    };
+//     // Capture image from webcam
+//     const capture = () => {
+//         const screenshot = webcamRef.current.getScreenshot();
+//         setImage(screenshot);
+//     };
 
-    return (
-        <Container className="mt-5 text-center">
-            <h2>Capture Image</h2>
+//     return (
+//         <Container className="mt-5 text-center">
+//             <h2>Capture Image</h2>
 
-            {!image ? (
-                <Webcam
-                    ref={webcamRef}
-                    screenshotFormat="image/jpeg"
-                    width={300}
-                    height={200}
-                    videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
-                />
-            ) : (
-                <Image src={image} alt="Captured" thumbnail width="300" />
-            )}
+//             {!image ? (
+//                 <Webcam
+//                     ref={webcamRef}
+//                     screenshotFormat="image/jpeg"
+//                     width={300}
+//                     height={200}
+//                     videoConstraints={{ facingMode: "user" }} // "environment" for rear camera
+//                 />
+//             ) : (
+//                 <Image src={image} alt="Captured" thumbnail width="300" />
+//             )}
 
-            <div className="mt-3">
-                {!image ? (
-                    <Button variant="primary" onClick={capture}>📷 Take Picture</Button>
-                ) : (
-                    <Button variant="danger" onClick={() => setImage(null)}>🔄 Retake</Button>
-                )}
-            </div>
-        </Container>
-    );
-}
+//             <div className="mt-3">
+//                 {!image ? (
+//                     <Button variant="primary" onClick={capture}>📷 Take Picture</Button>
+//                 ) : (
+//                     <Button variant="danger" onClick={() => setImage(null)}>🔄 Retake</Button>
+//                 )}
+//             </div>
+//         </Container>
+//     );
+// }
 
-export default CameraCapture;
+// export default CameraCapture;

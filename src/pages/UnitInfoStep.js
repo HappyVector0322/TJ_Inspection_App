@@ -11,6 +11,34 @@ import "bootstrap-icons/font/bootstrap-icons.css"; // Import Bootstrap Icons
 
 
 
+const CameraCapture = () => {
+  const handleCapture = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      const imageUrl = URL.createObjectURL(file);
+      console.log('Captured image:', imageUrl);
+      // Use this image URL to preview or upload
+    }
+  };
+
+  return (
+    <div>
+      <input
+        type="file"
+        accept="image/*"
+        capture="environment" // "user" for front camera
+        onChange={handleCapture}
+        style={{ display: 'none' }}
+        id="cameraInput"
+      />
+      <label htmlFor="cameraInput">
+        <button>📷 Take a Picture</button>
+      </label>
+    </div>
+  );
+}
+
+
 const UnitInfoStep = ({focusNextButton}) => {
   const dispatch = useDispatch();
   const user = useSelector(e => e.user.value);
@@ -135,6 +163,11 @@ const UnitInfoStep = ({focusNextButton}) => {
               ref={unitIdRef}
               onKeyPress={(e) => handleKeyPress(e, odometerRef)}
             />
+          </div>
+
+          
+          <div className="fields">
+            <CameraCapture />
           </div>
 
 
